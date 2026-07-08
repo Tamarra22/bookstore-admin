@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useBooks } from '../hooks/useBooks';
+import { usePermission } from '../hooks/usePermission';
 import { Table } from '../components/ui/Table';
 import { Pagination } from '../components/ui/Pagination';
 import { Button } from '../components/ui/Button';
@@ -10,6 +11,7 @@ import type { Book } from '../types/book.types';
 
 export function BooksPage() {
   const { books, currentPage, lastPage, isLoading, error, setPage, refetch } = useBooks();
+  const canViewCostPrice = usePermission('books.cost_price.view');
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [costPriceBook, setCostPriceBook] = useState<Book | null>(null);
 
@@ -33,40 +35,50 @@ export function BooksPage() {
   }
 
   return (
-    <div>
-      <h1 className="mb-4 text-lg font-semibold text-gray-900">Books</h1>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold text-gray-900">Books</h1>
+      </div>
 
-      <Table<Book>
-        rowKey={(book) => book.id}
-        data={books}
-        columns={[
-          { key: 'title', header: 'Title', render: (b) => b.title },
-          { key: 'author', header: 'Author', render: (b) => b.author },
-          {
-            key: 'retail_price',
-            header: 'Retail Price',
-            render: (b) => `${b.currency} ${b.retail_price}`,
-          },
-          {
-            key: 'actions',
-            header: 'Actions',
-            render: (b) => (
-              <div className="flex gap-2">
-                <Button variant="secondary" onClick={() => setEditingBook(b)}>
-                  Edit
-                </Button>
-                <HasPermission permission="books.cost_price.view">
-                  <Button variant="secondary" onClick={() => setCostPriceBook(b)}>
-                    View cost price
-                  </Button>
-                </HasPermission>
-              </div>
-            ),
-          },
-        ]}
-      />
+      <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+        <Table<Book>
+          rowKey={(book) => book.id}
+          data={books}
+          columns={[
+            { key: 'title', header: 'Title', render: (b) => b.title },
+            { key: 'author', header: 'Author', render: (b) => b.author },
+            {
+              key: 'retail_price',
+              header: 'Retail Price',
+              render: (b) => `${b.currency} ${b.retail_price}`,
+            },
+            ...(canViewCostPrice
+              ? [
+                  {
+                    key: 'actions',
+                    header: 'Actions',
+                    render: (b: Book) => (
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="secondary" onClick={() => setEditingBook(b)}>
+                          Edit
+                        </Button>
+                        <HasPermission permission="books.cost_price.view">
+                          <Button variant="secondary" onClick={() => setCostPriceBook(b)}>
+                            View cost price
+                          </Button>
+                        </HasPermission>
+                      </div>
+                    ),
+                  },
+                ]
+              : []),
+          ]}
+        />
+      </div>
 
-      <Pagination currentPage={currentPage} lastPage={lastPage} onPageChange={setPage} />
+      <div className="flex justify-end">
+        <Pagination currentPage={currentPage} lastPage={lastPage} onPageChange={setPage} />
+      </div>
 
       {editingBook && (
         <EditBookModal
