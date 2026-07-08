@@ -24,7 +24,7 @@ export function AppLayout() {
                 {initials}
               </div>
               <div className="pr-1 text-left">
-                <p className="text-sm font-medium text-gray-800 mr-2">{user?.name}</p>
+                <p className="text-sm font-medium text-gray-800 mr-2">{user?.name || roleLabel}</p>
               </div>
             </div>
             <button
